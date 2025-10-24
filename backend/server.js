@@ -56,8 +56,11 @@ app.use((req, res, next) => {
         'http://127.0.0.1:3001',
         'http://localhost:8080', // Test server
         'http://127.0.0.1:8080', // Test server
-        'file://' // For local file testing
-    ];
+        'file://', // For local file testing
+        // Railway domains
+        process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null,
+        process.env.RAILWAY_STATIC_URL ? process.env.RAILWAY_STATIC_URL : null
+    ].filter(Boolean);
     
     const origin = req.headers.origin;
     
@@ -190,7 +193,10 @@ app.get('/fs/oauth/callback', async (req, res) => {
         });
     
     // Redirect to success page or back to your app
-    res.redirect('https://huj.lpf.mybluehost.me/integro-fullscript/?auth=success');
+    const successUrl = process.env.RAILWAY_PUBLIC_DOMAIN 
+        ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/?auth=success`
+        : 'https://huj.lpf.mybluehost.me/integro-fullscript/?auth=success';
+    res.redirect(successUrl);
         
     } catch (error) {
         console.error('OAuth callback error:', error);
