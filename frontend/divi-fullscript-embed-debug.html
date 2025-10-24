@@ -1,0 +1,258 @@
+<!-- Fullscript Embed for WordPress Divi - DEBUG VERSION -->
+<!-- This code should be pasted into a Divi Code Module -->
+
+<!-- Include Fullscript.js library -->
+<script src="https://public-assets.fullscript.com/fullscript.js/3.0.1/fullscript-js.umd.min.js"></script>
+
+<!-- Fullscript Embed Container -->
+<div id="fullscript-embed-container" style="min-height: 600px; padding: 20px;">
+    <!-- Loading State -->
+    <div id="fullscript-loading" style="text-align: center; padding: 40px;">
+        <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <p style="margin-top: 20px; color: #666;">Loading Fullscript Store...</p>
+    </div>
+    
+    <!-- OAuth Required State -->
+    <div id="fullscript-oauth" style="display: none; text-align: center; padding: 40px; color: #2c3e50;">
+        <h3>🔐 Authentication Required</h3>
+        <p>To access the supplements store, you need to authenticate with Fullscript.</p>
+        <button onclick="startOAuth()" style="background: #27ae60; color: white; border: none; padding: 15px 30px; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold;">Connect to Fullscript</button>
+        <p style="margin-top: 15px; font-size: 14px; color: #7f8c8d;">This will open a new window for secure authentication.</p>
+    </div>
+    
+    <!-- Error State -->
+    <div id="fullscript-error" style="display: none; text-align: center; padding: 40px; color: #e74c3c;">
+        <h3>Unable to Load Store</h3>
+        <p>There was an error loading the supplements store. Please try again later.</p>
+        <button onclick="retryFullscript()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Retry</button>
+    </div>
+    
+    <!-- Fullscript Embed Target -->
+    <div id="fs-embed-target" style="display: none;"></div>
+    
+    <!-- DEBUG INFO -->
+    <div id="debug-info" style="background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; margin-top: 20px; border-radius: 5px; font-family: monospace; font-size: 12px;">
+        <strong>🐛 DEBUG INFO:</strong><br>
+        <span id="debug-status">Initializing...</span><br>
+        <span id="debug-events">Events: Loading...</span><br>
+        <span id="debug-version">Version: DEBUG-2025-10-24</span>
+    </div>
+</div>
+
+<!-- CSS for loading animation -->
+<style>
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#fullscript-embed-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin: 20px 0;
+}
+
+#fs-embed-target {
+    width: 100%;
+    min-height: 600px;
+}
+</style>
+
+<!-- JavaScript for Fullscript Embed -->
+<script>
+// Configuration
+const CONFIG = {
+    backendUrl: 'https://cbf72ec799a1.ngrok-free.app', // Your ngrok URL
+    publicKey: 'eNRmRfsOR7S85ZDMnJXOJvT9EgbOUQA7t9GpvVUI4LE', // Your Fullscript Public Key
+    env: 'us-snd' // Sandbox environment
+};
+
+// Global variables
+let fullscriptClient = null;
+let platformFeature = null;
+
+// Debug function
+function updateDebugInfo(status, events = null) {
+    document.getElementById('debug-status').textContent = `Status: ${status}`;
+    if (events) {
+        document.getElementById('debug-events').textContent = `Events: ${events}`;
+    }
+}
+
+// Initialize Fullscript Embed
+async function initializeFullscript() {
+    try {
+        console.log('🚀 Initializing Fullscript Embed...');
+        updateDebugInfo('Initializing...');
+        
+        // Check if user is returning from OAuth
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('auth') === 'success') {
+            console.log('✅ OAuth completed successfully!');
+            updateDebugInfo('OAuth completed');
+            // Remove the auth parameter from URL
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+        }
+        
+        // Show loading state
+        document.getElementById('fullscript-loading').style.display = 'block';
+        document.getElementById('fullscript-error').style.display = 'none';
+        document.getElementById('fs-embed-target').style.display = 'none';
+        
+        // Step 1: Get session grant from backend
+        console.log('📡 Requesting session grant...');
+        updateDebugInfo('Requesting session grant...');
+        const sessionResponse = await fetch(`${CONFIG.backendUrl}/fs/session-grant`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!sessionResponse.ok) {
+            if (sessionResponse.status === 401) {
+                console.log('🔐 Not authenticated. Showing OAuth button...');
+                updateDebugInfo('Not authenticated - showing OAuth button');
+                showOAuthButton();
+                return;
+            }
+            throw new Error(`Session grant failed: ${sessionResponse.status} ${sessionResponse.statusText}`);
+        }
+        
+        const sessionData = await sessionResponse.json();
+        console.log('✅ Session grant received:', sessionData);
+        updateDebugInfo('Session grant received');
+        
+        if (!sessionData.secretToken) {
+            throw new Error('No secret token received from backend');
+        }
+        
+        // Step 2: Initialize Fullscript client
+        console.log('🔧 Initializing Fullscript client...');
+        updateDebugInfo('Initializing Fullscript client...');
+        fullscriptClient = Fullscript({
+            publicKey: CONFIG.publicKey,
+            env: CONFIG.env
+        });
+        
+        // Step 3: Create platform feature
+        console.log('🏗️ Creating platform feature...');
+        updateDebugInfo('Creating platform feature...');
+        platformFeature = fullscriptClient.create('platform', {
+            secretToken: sessionData.secretToken,
+            mountEl: '#fs-embed-target',
+            patient: {
+                // Optional: Add patient info if available
+                // id: 'patient-id',
+                // email: 'patient@example.com'
+            }
+        });
+        
+        // Step 4: Set up event listeners
+        setupEventListeners();
+        
+        // Step 5: Show the embed
+        console.log('✅ Fullscript Embed initialized successfully!');
+        updateDebugInfo('Embed initialized successfully', 'treatmentPlan.activated, patient.selected, ready, error');
+        document.getElementById('fullscript-loading').style.display = 'none';
+        document.getElementById('fs-embed-target').style.display = 'block';
+        
+    } catch (error) {
+        console.error('❌ Fullscript initialization failed:', error);
+        updateDebugInfo(`Error: ${error.message}`);
+        showError(error.message);
+    }
+}
+
+// Set up event listeners for Fullscript events
+function setupEventListeners() {
+    if (!platformFeature) return;
+    
+    // Listen for valid Fullscript events
+    platformFeature.on('treatmentPlan.activated', (data) => {
+        console.log('📋 Treatment plan activated:', data);
+        updateDebugInfo('Treatment plan activated');
+        // Handle treatment plan activation
+    });
+    
+    platformFeature.on('patient.selected', (data) => {
+        console.log('👤 Patient selected:', data);
+        updateDebugInfo('Patient selected');
+        // Handle patient selection
+    });
+    
+    // Listen for errors
+    platformFeature.on('error', (error) => {
+        console.error('❌ Fullscript error:', error);
+        updateDebugInfo(`Fullscript error: ${error.message}`);
+        showError('An error occurred in the store. Please try again.');
+    });
+    
+    // Listen for general events (if available)
+    platformFeature.on('ready', () => {
+        console.log('✅ Fullscript store is ready!');
+        updateDebugInfo('Store ready');
+    });
+}
+
+// Show OAuth required state
+function showOAuthButton() {
+    document.getElementById('fullscript-loading').style.display = 'none';
+    document.getElementById('fs-embed-target').style.display = 'none';
+    document.getElementById('fullscript-error').style.display = 'none';
+    document.getElementById('fullscript-oauth').style.display = 'block';
+    updateDebugInfo('OAuth required');
+}
+
+// Start OAuth flow
+function startOAuth() {
+    console.log('🔐 Starting OAuth flow...');
+    updateDebugInfo('Starting OAuth...');
+    window.location.href = `${CONFIG.backendUrl}/fs/oauth/authorize`;
+}
+
+// Show error state
+function showError(message) {
+    document.getElementById('fullscript-loading').style.display = 'none';
+    document.getElementById('fs-embed-target').style.display = 'none';
+    document.getElementById('fullscript-oauth').style.display = 'none';
+    document.getElementById('fullscript-error').style.display = 'block';
+    
+    const errorElement = document.querySelector('#fullscript-error p');
+    if (errorElement) {
+        errorElement.textContent = message;
+    }
+    updateDebugInfo(`Error: ${message}`);
+}
+
+// Retry function
+function retryFullscript() {
+    console.log('🔄 Retrying Fullscript initialization...');
+    updateDebugInfo('Retrying...');
+    initializeFullscript();
+}
+
+// Show success message
+function showSuccess(message) {
+    // You can customize this success message
+    alert(message);
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 Page loaded, initializing Fullscript...');
+    updateDebugInfo('Page loaded');
+    initializeFullscript();
+});
+
+// Also initialize if DOM is already loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeFullscript);
+} else {
+    initializeFullscript();
+}
+</script>
+

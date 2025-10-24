@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Debug Test</title>
+</head>
+<body>
+    <h1>Session Debug Test</h1>
+    
+    <div id="status">Loading...</div>
+    
+    <button onclick="testOAuth()">Test OAuth Flow</button>
+    <button onclick="testSessionGrant()">Test Session Grant</button>
+    <button onclick="checkCookies()">Check Cookies</button>
+    
+    <div id="output"></div>
+
+    <script>
+        const CONFIG = {
+            backendUrl: 'https://cbf72ec799a1.ngrok-free.app'
+        };
+
+        function log(message) {
+            console.log(message);
+            document.getElementById('output').innerHTML += '<div>' + message + '</div>';
+        }
+
+        function testOAuth() {
+            log('🔐 Starting OAuth flow...');
+            window.location.href = `${CONFIG.backendUrl}/fs/oauth/authorize`;
+        }
+
+        async function testSessionGrant() {
+            log('📡 Testing session grant...');
+            try {
+                const response = await fetch(`${CONFIG.backendUrl}/fs/session-grant`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                log('Session grant response: ' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                log('Session grant error: ' + error.message);
+            }
+        }
+
+        function checkCookies() {
+            log('🍪 Current cookies: ' + document.cookie);
+            log('🌐 Current domain: ' + window.location.hostname);
+            log('🔗 Backend URL: ' + CONFIG.backendUrl);
+        }
+
+        // Check if we're returning from OAuth
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('auth') === 'success') {
+            log('✅ OAuth completed successfully!');
+            document.getElementById('status').textContent = 'OAuth completed - testing session grant...';
+            setTimeout(testSessionGrant, 1000);
+        } else {
+            document.getElementById('status').textContent = 'Ready to test OAuth flow';
+        }
+    </script>
+</body>
+</html>

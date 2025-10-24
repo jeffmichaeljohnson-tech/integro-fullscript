@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integro Health Fullscript Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+        }
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        .test-section {
+            padding: 40px;
+        }
+        .test-button {
+            background: #667eea;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .test-button:hover {
+            background: #5568d3;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+        }
+        .embed-container {
+            margin-top: 20px;
+            min-height: 400px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fafafa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Integro Health Fullscript Test</h1>
+            <p>Local Development Environment</p>
+        </div>
+        
+        <div class="test-section">
+            <h2>Backend Server Tests</h2>
+            
+            <div class="status" id="health-status">
+                <strong>Health Check:</strong> <span id="health-result">Testing...</span>
+            </div>
+            
+            <div class="status" id="oauth-status">
+                <strong>OAuth Flow:</strong> <span id="oauth-result">Ready to test</span>
+            </div>
+            
+            <div class="status" id="webhook-status">
+                <strong>Webhook Test:</strong> <span id="webhook-result">Ready to test</span>
+            </div>
+            
+            <a href="http://localhost:3001/health" class="test-button" target="_blank">Test Health Check</a>
+            <a href="http://localhost:3001/fs/oauth/authorize" class="test-button" target="_blank">Test OAuth Flow</a>
+            <button class="test-button" onclick="testWebhook()">Test Webhook</button>
+            <button class="test-button" onclick="testSessionGrant()">Test Session Grant</button>
+            
+            <h2>Fullscript Embed Test</h2>
+            <div class="embed-container" id="fullscript-embed-target">
+                <p>Fullscript embed will appear here after OAuth flow</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscript.js Library -->
+    <script src="https://public-assets.fullscript.com/fullscript.js/3.0.1/fullscript-js.umd.min.js"></script>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            backendUrl: 'http://localhost:3001',
+            publicKey: 'eNRmRfsOR7S85ZDMnJXOJvT9EgbOUQA7t9GpvVUI4LE',
+            env: 'us-snd'
+        };
+
+        // Test functions
+        async function testHealth() {
+            try {
+                const response = await fetch(`${CONFIG.backendUrl}/health`);
+                const data = await response.json();
+                document.getElementById('health-result').textContent = `✅ ${data.status} - ${data.timestamp}`;
+            } catch (error) {
+                document.getElementById('health-result').textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function testWebhook() {
+            try {
+                const response = await fetch(`${CONFIG.backendUrl}/fs/webhooks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        event: 'order.placed',
+                        data: { id: 'test-123', total: 99.99 }
+                    })
+                });
+                const data = await response.json();
+                document.getElementById('webhook-result').textContent = `✅ ${JSON.stringify(data)}`;
+            } catch (error) {
+                document.getElementById('webhook-result').textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function testSessionGrant() {
+            try {
+                const response = await fetch(`${CONFIG.backendUrl}/fs/session-grant`, {
+                    credentials: 'include'
+                });
+                
+                if (response.status === 401) {
+                    document.getElementById('oauth-result').textContent = '❌ Not authenticated. Complete OAuth flow first.';
+                    return;
+                }
+                
+                const data = await response.json();
+                document.getElementById('oauth-result').textContent = `✅ Session grant received: ${data.secretToken ? 'Yes' : 'No'}`;
+                
+                if (data.secretToken) {
+                    initializeFullscript(data.secretToken);
+                }
+            } catch (error) {
+                document.getElementById('oauth-result').textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        function initializeFullscript(secretToken) {
+            try {
+                const fullscriptClient = Fullscript({
+                    publicKey: CONFIG.publicKey,
+                    env: CONFIG.env
+                });
+
+                const platformFeature = fullscriptClient.create('platform', {
+                    secretToken: secretToken,
+                    mountEl: '#fullscript-embed-target'
+                });
+
+                platformFeature.on('order.created', (data) => {
+                    console.log('Order created:', data);
+                    alert('Order created successfully!');
+                });
+
+                console.log('Fullscript embed initialized');
+            } catch (error) {
+                console.error('Failed to initialize Fullscript:', error);
+            }
+        }
+
+        // Run initial tests
+        document.addEventListener('DOMContentLoaded', function() {
+            testHealth();
+        });
+    </script>
+</body>
+</html>

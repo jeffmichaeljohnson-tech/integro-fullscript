@@ -1,0 +1,553 @@
+<!-- ============================================
+     INTEGRO HEALTH - FULLSCRIPT SUPPLEMENT SHOP
+     Branded Implementation (Option 2)
+     
+     INSTRUCTIONS:
+     1. Log into WordPress admin
+     2. Create new page: "Supplement Shop"
+     3. Switch to "Text" or "Code" editor (not Visual)
+     4. Paste this ENTIRE code
+     5. Publish
+     6. Add to your navigation menu
+     
+     That's it! You're done!
+     ============================================ -->
+
+<style>
+/* ========================================
+   BRANDED INTEGRO HEALTH DESIGN
+   ======================================== */
+
+/* Main Container */
+.integro-supplement-shop {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Header Section */
+.shop-header {
+    text-align: center;
+    margin-bottom: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 60px 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+}
+
+.shop-header h1 {
+    font-size: 3em;
+    margin: 0 0 20px 0;
+    font-weight: 700;
+    letter-spacing: -1px;
+}
+
+.shop-header .subtitle {
+    font-size: 1.3em;
+    margin: 0 0 30px 0;
+    opacity: 0.95;
+    font-weight: 300;
+}
+
+.shop-header .description {
+    font-size: 1.1em;
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.6;
+    opacity: 0.9;
+}
+
+/* Feature Badges */
+.features {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    margin: 40px 0;
+}
+
+.feature-badge {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    padding: 15px 30px;
+    border-radius: 50px;
+    font-size: 0.95em;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.feature-badge:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.feature-badge::before {
+    content: '✓';
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+/* Instructions Banner */
+.instructions-banner {
+    background: #f8f9fa;
+    border-left: 4px solid #667eea;
+    padding: 25px 30px;
+    margin-bottom: 40px;
+    border-radius: 8px;
+}
+
+.instructions-banner h3 {
+    margin: 0 0 15px 0;
+    color: #667eea;
+    font-size: 1.3em;
+}
+
+.instructions-banner ol {
+    margin: 0;
+    padding-left: 20px;
+    line-height: 1.8;
+}
+
+.instructions-banner li {
+    margin: 8px 0;
+    color: #495057;
+}
+
+/* Fullscript Embed Container */
+.fullscript-container {
+    position: relative;
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    margin-bottom: 40px;
+}
+
+.fullscript-container::before {
+    content: '';
+    display: block;
+    padding-top: 75%; /* 4:3 aspect ratio */
+}
+
+.fullscript-iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Loading State */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: opacity 0.5s ease;
+}
+
+.loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    color: #667eea;
+    font-size: 1.1em;
+    font-weight: 500;
+}
+
+/* Fullscript Redirect Button */
+.fullscript-redirect {
+    background: white;
+    padding: 60px 40px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.redirect-content h3 {
+    color: #2c3e50;
+    font-size: 2.2em;
+    margin: 0 0 20px 0;
+    font-weight: 700;
+}
+
+.redirect-content p {
+    color: #6c757d;
+    font-size: 1.1em;
+    margin: 0 0 30px 0;
+    line-height: 1.6;
+}
+
+.redirect-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin: 30px 0;
+    text-align: left;
+}
+
+.feature-item {
+    color: #495057;
+    font-size: 1em;
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.shop-button {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 18px 50px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1em;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.3);
+    margin: 20px 0;
+}
+
+.shop-button:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #6a4190 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.redirect-note {
+    color: #6c757d;
+    font-size: 0.9em;
+    margin: 20px 0 0 0;
+    font-style: italic;
+}
+
+/* Support Section */
+.support-section {
+    background: #f8f9fa;
+    padding: 40px;
+    border-radius: 12px;
+    text-align: center;
+    margin-top: 40px;
+}
+
+.support-section h3 {
+    margin: 0 0 20px 0;
+    color: #2c3e50;
+    font-size: 1.5em;
+}
+
+.support-section p {
+    margin: 0 0 25px 0;
+    color: #6c757d;
+    font-size: 1.1em;
+    line-height: 1.6;
+}
+
+.contact-button {
+    display: inline-block;
+    background: #667eea;
+    color: white;
+    padding: 15px 40px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.05em;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.contact-button:hover {
+    background: #5568d3;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .integro-supplement-shop {
+        padding: 20px 15px;
+    }
+    
+    .shop-header {
+        padding: 40px 20px;
+    }
+    
+    .shop-header h1 {
+        font-size: 2em;
+    }
+    
+    .shop-header .subtitle {
+        font-size: 1.1em;
+    }
+    
+    .features {
+        gap: 15px;
+    }
+    
+    .feature-badge {
+        padding: 12px 20px;
+        font-size: 0.85em;
+    }
+    
+    .fullscript-container::before {
+        padding-top: 100%; /* More square on mobile */
+    }
+}
+
+@media (max-width: 480px) {
+    .shop-header h1 {
+        font-size: 1.5em;
+    }
+    
+    .features {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .feature-badge {
+        justify-content: center;
+    }
+    
+    .fullscript-redirect {
+        padding: 40px 20px;
+    }
+    
+    .redirect-content h3 {
+        font-size: 1.8em;
+    }
+    
+    .redirect-features {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .shop-button {
+        padding: 15px 40px;
+        font-size: 1em;
+    }
+}
+</style>
+
+<!-- ========================================
+     HTML STRUCTURE
+     ======================================== -->
+
+<div class="integro-supplement-shop">
+    
+    <!-- Header Section -->
+    <div class="shop-header">
+        <h1>Professional Supplement Shop</h1>
+        <p class="subtitle">High-Quality Supplements Curated by Integro Health</p>
+        <p class="description">
+            Browse our collection of 40,000+ professional-grade supplements from trusted brands. 
+            All products are vetted for quality and backed by clinical research.
+        </p>
+        
+        <!-- Feature Badges -->
+        <div class="features">
+            <div class="feature-badge">Free Shipping on $50+</div>
+            <div class="feature-badge">Professional Grade Quality</div>
+            <div class="feature-badge">40,000+ Products</div>
+            <div class="feature-badge">Secure HIPAA Compliant</div>
+        </div>
+    </div>
+    
+    <!-- Instructions Banner (Remove this section once you're comfortable) -->
+    <div class="instructions-banner">
+        <h3>🎉 Your Supplement Shop is Live!</h3>
+        <ol>
+            <li><strong>Browse products</strong> using the catalog below</li>
+            <li><strong>Add items to cart</strong> and complete checkout securely</li>
+            <li><strong>Questions?</strong> Contact us using the button at the bottom</li>
+        </ol>
+        <p style="margin: 15px 0 0 0; font-size: 0.9em; color: #6c757d;">
+            <em>Note: You can remove this instruction box once you're familiar with the shop.</em>
+        </p>
+    </div>
+    
+    <!-- Fullscript Integration -->
+    <div class="fullscript-container" id="fullscript-container">
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loading-overlay">
+            <div class="spinner"></div>
+            <div class="loading-text">Loading supplement catalog...</div>
+        </div>
+        
+        <!-- Fullscript Redirect Button -->
+        <div class="fullscript-redirect" id="fullscript-redirect" style="display: none;">
+            <div class="redirect-content">
+                <h3>Professional Supplement Shop</h3>
+                <p>Access our curated collection of 40,000+ professional-grade supplements from trusted brands.</p>
+                <div class="redirect-features">
+                    <div class="feature-item">✓ Free shipping on orders $50+</div>
+                    <div class="feature-item">✓ Professional-grade quality</div>
+                    <div class="feature-item">✓ Secure HIPAA-compliant checkout</div>
+                    <div class="feature-item">✓ Healthcare professional recommendations</div>
+                </div>
+                <a href="https://us.fullscript.com/welcome/integrohealth/store-start" 
+                   class="shop-button" 
+                   target="_blank" 
+                   rel="noopener noreferrer">
+                    Browse Supplements →
+                </a>
+                <p class="redirect-note">
+                    <small>You'll be redirected to our secure supplement platform for browsing and checkout.</small>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Fullscript iframe -->
+        <iframe 
+            class="fullscript-iframe"
+            id="fullscript-iframe"
+            src="https://us.fullscript.com/welcome/integrohealth/store-start"
+            title="Integro Health Supplement Shop"
+            allow="payment; fullscreen"
+            loading="lazy"
+            onload="window.hideLoading()"
+            onerror="window.showRedirect()"
+        ></iframe>
+    </div>
+    
+    <!-- Support Section -->
+    <div class="support-section">
+        <h3>Need Help Choosing Supplements?</h3>
+        <p>
+            Our healthcare professionals are here to guide you in selecting the right supplements 
+            for your wellness goals. Schedule a consultation or send us a message!
+        </p>
+        <a href="/contact" class="contact-button">Contact Integro Health</a>
+    </div>
+    
+</div>
+
+<!-- ========================================
+     JAVASCRIPT
+     ======================================== -->
+
+<script>
+// Hide loading overlay when iframe loads
+function hideLoading() {
+    console.log('Fullscript iframe loaded successfully');
+    const overlay = document.getElementById('loading-overlay');
+    const redirect = document.getElementById('fullscript-redirect');
+    const iframe = document.getElementById('fullscript-iframe');
+    
+    if (overlay) {
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+        }, 500); // Small delay for smooth transition
+    }
+    
+    // Hide redirect button if iframe loads successfully
+    if (redirect) {
+        redirect.style.display = 'none';
+    }
+    
+    // Show iframe if it loads successfully
+    if (iframe) {
+        iframe.style.display = 'block';
+    }
+}
+
+// Make hideLoading globally accessible
+window.hideLoading = hideLoading;
+
+// Show redirect button if iframe fails to load
+function showRedirect() {
+    console.log('Fullscript iframe blocked, showing redirect button');
+    const overlay = document.getElementById('loading-overlay');
+    const redirect = document.getElementById('fullscript-redirect');
+    
+    if (overlay) overlay.style.display = 'none';
+    if (redirect) redirect.style.display = 'block';
+}
+
+// Make showRedirect globally accessible
+window.showRedirect = showRedirect;
+
+// Fallback: Show redirect button after 8 seconds if iframe doesn't load
+setTimeout(() => {
+    const overlay = document.getElementById('loading-overlay');
+    const redirect = document.getElementById('fullscript-redirect');
+    const iframe = document.getElementById('fullscript-iframe');
+    
+    if (overlay && !overlay.classList.contains('hidden')) {
+        console.log('Fullscript iframe timeout, showing redirect button');
+        overlay.style.display = 'none';
+        if (redirect) redirect.style.display = 'block';
+        if (iframe) iframe.style.display = 'none';
+    }
+}, 8000);
+
+// Optional: Track when users interact with the embed
+document.getElementById('fullscript-iframe')?.addEventListener('load', function() {
+    console.log('Fullscript shop loaded successfully');
+    
+    // Optional: Send analytics event (if you use Google Analytics)
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'fullscript_shop_loaded', {
+            'event_category': 'engagement',
+            'event_label': 'Supplement Shop'
+        });
+    }
+});
+
+// Console message for debugging
+console.log('Integro Health Supplement Shop initialized');
+console.log('Fullscript URL: https://us.fullscript.com/welcome/integrohealth/store-start');
+</script>
+
+<!-- ========================================
+     END OF CODE
+     
+     WHAT TO DO NEXT:
+     1. Test on desktop
+     2. Test on mobile
+     3. Check console for errors (F12)
+     4. Update contact button link if needed
+     5. Customize colors if desired
+     
+     CUSTOMIZATION OPTIONS:
+     - Change purple gradient (line 29): #667eea and #764ba2
+     - Update feature badges (lines 88-92)
+     - Modify contact button link (line 337)
+     - Edit header text (lines 257-264)
+     
+     ======================================== -->
