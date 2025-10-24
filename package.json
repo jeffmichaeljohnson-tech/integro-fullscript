@@ -1,0 +1,30 @@
+{
+  "name": "integro-fullscript",
+  "version": "1.0.0",
+  "description": "Integro Health Fullscript Integration - Complete WordPress/Divi solution with OAuth authentication",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "cd backend && npm start",
+    "dev": "cd backend && npm run dev",
+    "build": "cd backend && npm install",
+    "test": "cd backend && npm test"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "fullscript",
+    "healthcare",
+    "supplements",
+    "oauth",
+    "wordpress",
+    "divi",
+    "railway"
+  ],
+  "author": "Integro Health",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jeffmichaeljohnson-tech/integro-fullscript.git"
+  }
+}
