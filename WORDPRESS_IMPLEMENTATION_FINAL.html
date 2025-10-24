@@ -1,414 +1,223 @@
-<!-- ============================================
-     INTEGRO HEALTH - FULLSCRIPT SUPPLEMENT SHOP
-     Final Implementation (Redirect Approach)
-     
-     INSTRUCTIONS:
-     1. Log into WordPress admin
-     2. Create new page: "Supplement Shop"
-     3. Switch to "Text" or "Code" editor (not Visual)
-     4. Paste this ENTIRE code
-     5. Publish
-     6. Add to your navigation menu
-     
-     This approach uses redirect to Fullscript (preferred method)
-     ============================================ -->
+<!-- FULLSCRIPT INTEGRATION - PRODUCTION READY -->
+<!-- Copy this entire code block into a Divi Code Module on your WordPress site -->
 
+<!-- Include Fullscript.js library -->
+<script src="https://public-assets.fullscript.com/fullscript.js/3.0.1/fullscript-js.umd.min.js"></script>
+
+<!-- Fullscript Embed Container -->
+<div id="fullscript-embed-container" style="min-height: 600px; padding: 20px;">
+    <!-- Loading State -->
+    <div id="fullscript-loading" style="text-align: center; padding: 40px;">
+        <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <p style="margin-top: 20px; color: #666;">Loading Fullscript Store...</p>
+    </div>
+    
+    <!-- OAuth Required State -->
+    <div id="fullscript-oauth" style="display: none; text-align: center; padding: 40px; color: #2c3e50;">
+        <h3>🔐 Authentication Required</h3>
+        <p>To access the supplements store, you need to authenticate with Fullscript.</p>
+        <button onclick="startOAuth()" style="background: #27ae60; color: white; border: none; padding: 15px 30px; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold;">Connect to Fullscript</button>
+        <p style="margin-top: 15px; font-size: 14px; color: #7f8c8d;">This will open a new window for secure authentication.</p>
+    </div>
+    
+    <!-- Error State -->
+    <div id="fullscript-error" style="display: none; text-align: center; padding: 40px; color: #e74c3c;">
+        <h3>Unable to Load Store</h3>
+        <p>There was an error loading the supplements store. Please try again later.</p>
+        <button onclick="retryFullscript()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Retry</button>
+    </div>
+    
+    <!-- Fullscript Embed Target -->
+    <div id="fs-embed-target" style="display: none;"></div>
+</div>
+
+<!-- CSS for loading animation -->
 <style>
-/* ========================================
-   BRANDED INTEGRO HEALTH DESIGN
-   ======================================== */
-
-/* Main Container */
-.integro-supplement-shop {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 40px 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
-/* Header Section */
-.shop-header {
-    text-align: center;
-    margin-bottom: 50px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 60px 40px;
-    border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
-}
-
-.shop-header h1 {
-    font-size: 3em;
-    margin: 0 0 20px 0;
-    font-weight: 700;
-    letter-spacing: -1px;
-}
-
-.shop-header .subtitle {
-    font-size: 1.3em;
-    margin: 0 0 30px 0;
-    opacity: 0.95;
-    font-weight: 300;
-}
-
-.shop-header .description {
-    font-size: 1.1em;
-    max-width: 800px;
-    margin: 0 auto;
-    line-height: 1.6;
-    opacity: 0.9;
-}
-
-/* Feature Badges */
-.features {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    flex-wrap: wrap;
-    margin: 40px 0;
-}
-
-.feature-badge {
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    padding: 15px 30px;
-    border-radius: 50px;
-    font-size: 0.95em;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: all 0.3s ease;
-}
-
-.feature-badge:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-2px);
-}
-
-.feature-badge::before {
-    content: '✓';
-    font-weight: bold;
-    font-size: 1.2em;
-}
-
-/* Instructions Banner */
-.instructions-banner {
-    background: #f8f9fa;
-    border-left: 4px solid #667eea;
-    padding: 25px 30px;
-    margin-bottom: 40px;
+#fullscript-embed-container {
+    background: #fff;
     border-radius: 8px;
-}
-
-.instructions-banner h3 {
-    margin: 0 0 15px 0;
-    color: #667eea;
-    font-size: 1.3em;
-}
-
-.instructions-banner ol {
-    margin: 0;
-    padding-left: 20px;
-    line-height: 1.8;
-}
-
-.instructions-banner li {
-    margin: 8px 0;
-    color: #495057;
-}
-
-/* Fullscript Shop Section */
-.fullscript-shop {
-    background: white;
-    padding: 60px 40px;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    text-align: center;
-    margin-bottom: 40px;
-}
-
-.fullscript-shop h3 {
-    color: #2c3e50;
-    font-size: 2.2em;
-    margin: 0 0 20px 0;
-    font-weight: 700;
-}
-
-.fullscript-shop p {
-    color: #6c757d;
-    font-size: 1.1em;
-    margin: 0 0 30px 0;
-    line-height: 1.6;
-}
-
-.shop-features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 15px;
-    margin: 30px 0;
-    text-align: left;
-}
-
-.shop-feature-item {
-    color: #495057;
-    font-size: 1em;
-    padding: 10px 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.shop-button {
-    display: inline-block;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 18px 50px;
-    border-radius: 50px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 1.1em;
-    transition: all 0.3s ease;
-    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     margin: 20px 0;
 }
 
-.shop-button:hover {
-    background: linear-gradient(135deg, #5568d3 0%, #6a4190 100%);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
-    color: white;
-    text-decoration: none;
-}
-
-.shop-note {
-    color: #6c757d;
-    font-size: 0.9em;
-    margin: 20px 0 0 0;
-    font-style: italic;
-}
-
-/* Support Section */
-.support-section {
-    background: #f8f9fa;
-    padding: 40px;
-    border-radius: 12px;
-    text-align: center;
-    margin-top: 40px;
-}
-
-.support-section h3 {
-    margin: 0 0 20px 0;
-    color: #2c3e50;
-    font-size: 1.5em;
-}
-
-.support-section p {
-    margin: 0 0 25px 0;
-    color: #6c757d;
-    font-size: 1.1em;
-    line-height: 1.6;
-}
-
-.contact-button {
-    display: inline-block;
-    background: #667eea;
-    color: white;
-    padding: 15px 40px;
-    border-radius: 50px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 1.05em;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.contact-button:hover {
-    background: #5568d3;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    color: white;
-    text-decoration: none;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .integro-supplement-shop {
-        padding: 20px 15px;
-    }
-    
-    .shop-header {
-        padding: 40px 20px;
-    }
-    
-    .shop-header h1 {
-        font-size: 2em;
-    }
-    
-    .shop-header .subtitle {
-        font-size: 1.1em;
-    }
-    
-    .features {
-        gap: 15px;
-    }
-    
-    .feature-badge {
-        padding: 12px 20px;
-        font-size: 0.85em;
-    }
-    
-    .fullscript-shop {
-        padding: 40px 20px;
-    }
-    
-    .shop-features {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-}
-
-@media (max-width: 480px) {
-    .shop-header h1 {
-        font-size: 1.5em;
-    }
-    
-    .features {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .feature-badge {
-        justify-content: center;
-    }
-    
-    .fullscript-shop h3 {
-        font-size: 1.8em;
-    }
-    
-    .shop-button {
-        padding: 15px 40px;
-        font-size: 1em;
-    }
+#fs-embed-target {
+    width: 100%;
+    min-height: 600px;
 }
 </style>
 
-<!-- ========================================
-     HTML STRUCTURE
-     ======================================== -->
-
-<div class="integro-supplement-shop">
-    
-    <!-- Header Section -->
-    <div class="shop-header">
-        <h1>Professional Supplement Shop</h1>
-        <p class="subtitle">High-Quality Supplements Curated by Integro Health</p>
-        <p class="description">
-            Browse our collection of 40,000+ professional-grade supplements from trusted brands. 
-            All products are vetted for quality and backed by clinical research.
-        </p>
-        
-        <!-- Feature Badges -->
-        <div class="features">
-            <div class="feature-badge">Free Shipping on $50+</div>
-            <div class="feature-badge">Professional Grade Quality</div>
-            <div class="feature-badge">40,000+ Products</div>
-            <div class="feature-badge">Secure HIPAA Compliant</div>
-        </div>
-    </div>
-    
-    <!-- Instructions Banner (Remove this section once you're comfortable) -->
-    <div class="instructions-banner">
-        <h3>🎉 Your Supplement Shop is Live!</h3>
-        <ol>
-            <li><strong>Click "Browse Supplements"</strong> to access our professional catalog</li>
-            <li><strong>Create your account</strong> on our secure platform</li>
-            <li><strong>Shop with confidence</strong> knowing all products are healthcare professional approved</li>
-        </ol>
-        <p style="margin: 15px 0 0 0; font-size: 0.9em; color: #6c757d;">
-            <em>Note: You can remove this instruction box once you're familiar with the shop.</em>
-        </p>
-    </div>
-    
-    <!-- Fullscript Shop Section -->
-    <div class="fullscript-shop">
-        <h3>Professional Supplement Shop</h3>
-        <p>Access our curated collection of 40,000+ professional-grade supplements from trusted brands like Pure Encapsulations, Thorne, Nordic Naturals, and more.</p>
-        
-        <div class="shop-features">
-            <div class="shop-feature-item">✓ Free shipping on orders $50+</div>
-            <div class="shop-feature-item">✓ Professional-grade quality</div>
-            <div class="shop-feature-item">✓ Secure HIPAA-compliant checkout</div>
-            <div class="shop-feature-item">✓ Healthcare professional recommendations</div>
-            <div class="shop-feature-item">✓ 20-30% off retail prices</div>
-            <div class="shop-feature-item">✓ Practitioner-recommended products</div>
-        </div>
-        
-        <a href="https://us.fullscript.com/welcome/integrohealth/store-start" 
-           class="shop-button" 
-           target="_blank" 
-           rel="noopener noreferrer">
-            Browse Supplements →
-        </a>
-        
-        <p class="shop-note">
-            <small>You'll be redirected to our secure supplement platform for browsing and checkout.</small>
-        </p>
-    </div>
-    
-    <!-- Support Section -->
-    <div class="support-section">
-        <h3>Need Help Choosing Supplements?</h3>
-        <p>
-            Our healthcare professionals are here to guide you in selecting the right supplements 
-            for your wellness goals. Schedule a consultation or send us a message!
-        </p>
-        <a href="/contact" class="contact-button">Contact Integro Health</a>
-    </div>
-    
-</div>
-
-<!-- ========================================
-     JAVASCRIPT
-     ======================================== -->
-
+<!-- JavaScript for Fullscript Embed -->
 <script>
-// Simple analytics tracking (optional)
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Integro Health Supplement Shop loaded successfully');
-    
-    // Track button clicks (if you use Google Analytics)
-    const shopButton = document.querySelector('.shop-button');
-    if (shopButton) {
-        shopButton.addEventListener('click', function() {
-            console.log('Shop button clicked - redirecting to Fullscript');
-            
-            // Optional: Send analytics event
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'fullscript_shop_click', {
-                    'event_category': 'engagement',
-                    'event_label': 'Supplement Shop'
-                });
+// Configuration - SANDBOX TESTING
+const CONFIG = {
+    backendUrl: 'https://backend-production-51c9.up.railway.app', // Railway Production URL
+    publicKey: 'eNRmRfsOR7S85ZDMnJXOJvT9EgbOUQA7t9GpvVUI4LE', // Your Fullscript Public Key
+    env: 'us-snd' // Sandbox environment for testing
+};
+
+// Global variables
+let fullscriptClient = null;
+let platformFeature = null;
+
+// Initialize Fullscript Embed
+async function initializeFullscript() {
+    try {
+        console.log('🚀 Initializing Fullscript Embed...');
+        
+        // Check if user is returning from OAuth
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('auth') === 'success') {
+            console.log('✅ OAuth completed successfully!');
+            // Remove the auth parameter from URL
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+        }
+        
+        // Show loading state
+        document.getElementById('fullscript-loading').style.display = 'block';
+        document.getElementById('fullscript-error').style.display = 'none';
+        document.getElementById('fs-embed-target').style.display = 'none';
+        
+        // Step 1: Get session grant from backend
+        console.log('📡 Requesting session grant...');
+        const sessionResponse = await fetch(`${CONFIG.backendUrl}/fs/session-grant`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
             }
         });
+        
+        if (!sessionResponse.ok) {
+            if (sessionResponse.status === 401) {
+                console.log('🔐 Not authenticated. Showing OAuth button...');
+                showOAuthButton();
+                return;
+            }
+            throw new Error(`Session grant failed: ${sessionResponse.status} ${sessionResponse.statusText}`);
+        }
+        
+        const sessionData = await sessionResponse.json();
+        console.log('✅ Session grant received:', sessionData);
+        
+        if (!sessionData.secretToken) {
+            throw new Error('No secret token received from backend');
+        }
+        
+        // Step 2: Initialize Fullscript client
+        console.log('🔧 Initializing Fullscript client...');
+        fullscriptClient = Fullscript({
+            publicKey: CONFIG.publicKey,
+            env: CONFIG.env
+        });
+        
+        // Step 3: Create platform feature
+        console.log('🏗️ Creating platform feature...');
+        platformFeature = fullscriptClient.create('platform', {
+            secretToken: sessionData.secretToken,
+            mountEl: '#fs-embed-target',
+            patient: {
+                // Optional: Add patient info if available
+                // id: 'patient-id',
+                // email: 'patient@example.com'
+            }
+        });
+        
+        // Step 4: Set up event listeners
+        setupEventListeners();
+        
+        // Step 5: Show the embed
+        console.log('✅ Fullscript Embed initialized successfully!');
+        document.getElementById('fullscript-loading').style.display = 'none';
+        document.getElementById('fs-embed-target').style.display = 'block';
+        
+    } catch (error) {
+        console.error('❌ Fullscript initialization failed:', error);
+        showError(error.message);
     }
-});
-</script>
+}
 
-<!-- ========================================
-     END OF CODE
-     
-     WHAT TO DO NEXT:
-     1. Test on desktop
-     2. Test on mobile
-     3. Check console for errors (F12)
-     4. Update contact button link if needed
-     5. Customize colors if desired
-     
-     CUSTOMIZATION OPTIONS:
-     - Change purple gradient (line 29): #667eea and #764ba2
-     - Update feature badges (lines 88-92)
-     - Modify contact button link (line 337)
-     - Edit header text (lines 257-264)
-     
-     ======================================== -->
+// Set up event listeners for Fullscript events
+function setupEventListeners() {
+    if (!platformFeature) return;
+    
+    // Listen for valid Fullscript events
+    platformFeature.on('treatmentPlan.activated', (data) => {
+        console.log('📋 Treatment plan activated:', data);
+        // Handle treatment plan activation
+    });
+    
+    platformFeature.on('patient.selected', (data) => {
+        console.log('👤 Patient selected:', data);
+        // Handle patient selection
+    });
+    
+    // Listen for errors
+    platformFeature.on('error', (error) => {
+        console.error('❌ Fullscript error:', error);
+        showError('An error occurred in the store. Please try again.');
+    });
+    
+    // Listen for general events (if available)
+    platformFeature.on('ready', () => {
+        console.log('✅ Fullscript store is ready!');
+    });
+}
+
+// Show OAuth required state
+function showOAuthButton() {
+    document.getElementById('fullscript-loading').style.display = 'none';
+    document.getElementById('fs-embed-target').style.display = 'none';
+    document.getElementById('fullscript-error').style.display = 'none';
+    document.getElementById('fullscript-oauth').style.display = 'block';
+}
+
+// Start OAuth flow
+function startOAuth() {
+    console.log('🔐 Starting OAuth flow...');
+    window.location.href = `${CONFIG.backendUrl}/fs/oauth/authorize`;
+}
+
+// Show error state
+function showError(message) {
+    document.getElementById('fullscript-loading').style.display = 'none';
+    document.getElementById('fs-embed-target').style.display = 'none';
+    document.getElementById('fullscript-oauth').style.display = 'none';
+    document.getElementById('fullscript-error').style.display = 'block';
+    
+    const errorElement = document.querySelector('#fullscript-error p');
+    if (errorElement) {
+        errorElement.textContent = message;
+    }
+}
+
+// Retry function
+function retryFullscript() {
+    console.log('🔄 Retrying Fullscript initialization...');
+    initializeFullscript();
+}
+
+// Show success message
+function showSuccess(message) {
+    // You can customize this success message
+    alert(message);
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 Page loaded, initializing Fullscript...');
+    initializeFullscript();
+});
+
+// Also initialize if DOM is already loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeFullscript);
+} else {
+    initializeFullscript();
+}
+</script>

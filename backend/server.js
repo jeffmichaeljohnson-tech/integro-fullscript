@@ -26,8 +26,8 @@ const FULLSCRIPT_CONFIG = {
     clientId: process.env.FULLSCRIPT_CLIENT_ID || 'eNRmRfsOR7S85ZDMnJXOJvT9EgbOUQA7t9GpvVUI4LE',
     clientSecret: process.env.FULLSCRIPT_CLIENT_SECRET, // Required - will be validated
     redirectUri: process.env.FULLSCRIPT_REDIRECT_URI || 'https://integrohealth.net/fs/oauth/callback',
-    baseUrl: process.env.FULLSCRIPT_BASE_URL || 'https://api.fullscript.com',
-    env: process.env.FULLSCRIPT_ENV || 'us' // 'us' for production, 'us-snd' for sandbox
+    baseUrl: process.env.FULLSCRIPT_BASE_URL || 'https://api-us-snd.fullscript.io',
+    env: process.env.FULLSCRIPT_ENV || 'us-snd' // 'us-snd' for sandbox, 'us' for production
 };
 
 // Validate critical configuration
