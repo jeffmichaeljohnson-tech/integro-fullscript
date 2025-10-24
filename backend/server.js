@@ -10,7 +10,6 @@
  */
 
 const express = require('express');
-const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -22,14 +21,20 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Fullscript API Configuration
+// Fullscript API Configuration with validation
 const FULLSCRIPT_CONFIG = {
     clientId: process.env.FULLSCRIPT_CLIENT_ID || 'eNRmRfsOR7S85ZDMnJXOJvT9EgbOUQA7t9GpvVUI4LE',
-    clientSecret: process.env.FULLSCRIPT_CLIENT_SECRET, // Set in environment
+    clientSecret: process.env.FULLSCRIPT_CLIENT_SECRET, // Required - will be validated
     redirectUri: process.env.FULLSCRIPT_REDIRECT_URI || 'https://integrohealth.net/fs/oauth/callback',
     baseUrl: process.env.FULLSCRIPT_BASE_URL || 'https://api.fullscript.com',
     env: process.env.FULLSCRIPT_ENV || 'us' // 'us' for production, 'us-snd' for sandbox
 };
+
+// Validate critical configuration
+if (!FULLSCRIPT_CONFIG.clientSecret) {
+    console.error('❌ CRITICAL: FULLSCRIPT_CLIENT_SECRET is required but not set');
+    console.error('❌ Please set FULLSCRIPT_CLIENT_SECRET in Railway environment variables');
+}
 
 // Session middleware
 app.use(session({
@@ -48,6 +53,7 @@ app.use(require('cookie-parser')());
 
 // CORS configuration for development and production
 app.use((req, res, next) => {
+    // Build allowed origins dynamically
     const allowedOrigins = [
         'https://integrohealth.net',
         'https://www.integrohealth.net',
@@ -57,10 +63,21 @@ app.use((req, res, next) => {
         'http://localhost:8080', // Test server
         'http://127.0.0.1:8080', // Test server
         'file://', // For local file testing
-        // Railway domains
-        process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null,
-        process.env.RAILWAY_STATIC_URL ? process.env.RAILWAY_STATIC_URL : null
-    ].filter(Boolean);
+    ];
+    
+    // Add Railway domains if they exist
+    if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+        allowedOrigins.push(`https://${process.env.RAILWAY_PUBLIC_DOMAIN}`);
+    }
+    if (process.env.RAILWAY_STATIC_URL) {
+        allowedOrigins.push(process.env.RAILWAY_STATIC_URL);
+    }
+    
+    // Add any custom CORS origins from environment
+    if (process.env.CORS_ORIGINS) {
+        const customOrigins = process.env.CORS_ORIGINS.split(',').map(origin => origin.trim());
+        allowedOrigins.push(...customOrigins);
+    }
     
     const origin = req.headers.origin;
     
@@ -504,10 +521,13 @@ function handlePatientCreated(patientData) {
  * Health check endpoint
  */
 app.get('/health', (req, res) => {
+    console.log('🏥 Health check requested');
     res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
-        version: '1.0.0'
+        version: '1.0.0',
+        port: PORT,
+        environment: process.env.NODE_ENV
     });
 });
 
@@ -520,23 +540,64 @@ app.use((error, req, res, next) => {
 });
 
 /**
- * Start server
+ * Environment validation and startup
  */
-if (process.env.NODE_ENV === 'production') {
-    // Production: Use HTTPS
-    const options = {
-        key: fs.readFileSync(process.env.SSL_KEY_PATH),
-        cert: fs.readFileSync(process.env.SSL_CERT_PATH)
-    };
+function validateEnvironment() {
+    const requiredVars = [
+        'FULLSCRIPT_CLIENT_SECRET',
+        'SESSION_SECRET'
+    ];
     
-    https.createServer(options, app).listen(PORT, () => {
-        console.log(`HTTPS Server running on port ${PORT}`);
-    });
-} else {
-    // Development: Use HTTP
-    app.listen(PORT, () => {
-        console.log(`HTTP Server running on port ${PORT}`);
-    });
+    const missing = requiredVars.filter(varName => !process.env[varName]);
+    
+    if (missing.length > 0) {
+        console.error('❌ Missing required environment variables:', missing);
+        console.error('❌ Please set these in Railway dashboard');
+        process.exit(1);
+    }
+    
+    console.log('✅ Environment validation passed');
 }
+
+/**
+ * Start server with proper error handling
+ */
+function startServer() {
+    try {
+        // Validate environment before starting
+        validateEnvironment();
+        
+        // Ensure PORT is a valid number
+        const port = parseInt(process.env.PORT) || 3000;
+        
+        // Railway handles SSL automatically, so we always use HTTP
+        const server = app.listen(port, '0.0.0.0', () => {
+            console.log(`✅ Server running on port ${port}`);
+            console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
+            console.log(`✅ Health check available at: http://0.0.0.0:${port}/health`);
+            console.log(`✅ Fullscript Client ID: ${FULLSCRIPT_CONFIG.clientId}`);
+            console.log(`✅ Fullscript Secret: ${FULLSCRIPT_CONFIG.clientSecret ? 'SET' : 'MISSING'}`);
+            console.log(`✅ Session Secret: ${process.env.SESSION_SECRET ? 'SET' : 'MISSING'}`);
+            console.log(`✅ Railway Public Domain: ${process.env.RAILWAY_PUBLIC_DOMAIN || 'NOT SET'}`);
+        });
+        
+        // Handle server errors
+        server.on('error', (error) => {
+            console.error('❌ Server error:', error);
+            if (error.code === 'EADDRINUSE') {
+                console.error('❌ Port already in use. Trying next available port...');
+            }
+        });
+        
+        return server;
+        
+    } catch (error) {
+        console.error('❌ Failed to start server:', error);
+        process.exit(1);
+    }
+}
+
+// Start the server
+startServer();
 
 module.exports = app;
